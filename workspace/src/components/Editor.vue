@@ -3,19 +3,6 @@
     <div class="editor-header">
       <h3>代码编辑器</h3>
       <div class="editor-controls">
-        <el-select 
-          v-model="currentLanguage" 
-          size="small" 
-          style="width: 100px; margin-right: 8px"
-          @change="changeLanguage"
-        >
-          <el-option label="Vue" value="vue" />
-          <el-option label="JavaScript" value="javascript" />
-          <el-option label="TypeScript" value="typescript" />
-          <el-option label="HTML" value="html" />
-          <el-option label="CSS" value="css" />
-          <el-option label="JSON" value="json" />
-        </el-select>
         <el-button size="small" @click="toggleTheme" style="margin-right: 8px">
           {{ isDarkTheme ? '☀️' : '🌙' }}
         </el-button>
@@ -77,14 +64,13 @@ const emit = defineEmits(['update:modelValue', 'code-change'])
 
 const editorContainer = ref(null)
 let editor = null
-const currentLanguage = ref(props.language)
 const isDarkTheme = ref(true)
 
 onMounted(() => {
   // 使用内置主题
   editor = monaco.editor.create(editorContainer.value, {
     value: props.modelValue,
-    language: props.language,
+    language: 'vue',
     theme: 'vs-dark',
     automaticLayout: true,
     minimap: { enabled: false },
@@ -135,16 +121,6 @@ const toggleTheme = () => {
   }
 }
 
-// 切换语言
-const changeLanguage = (language) => {
-  if (editor) {
-    const model = editor.getModel()
-    if (model) {
-      monaco.editor.setModelLanguage(model, language)
-    }
-  }
-}
-
 // 格式化代码
 const formatCode = () => {
   if (editor) {
@@ -156,14 +132,6 @@ const formatCode = () => {
 watch(() => props.modelValue, (newValue) => {
   if (editor && editor.getValue() !== newValue) {
     editor.setValue(newValue)
-  }
-})
-
-// 监听语言变化
-watch(() => props.language, (newLanguage) => {
-  currentLanguage.value = newLanguage
-  if (editor) {
-    changeLanguage(newLanguage)
   }
 })
 </script>

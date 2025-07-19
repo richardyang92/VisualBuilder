@@ -6,13 +6,16 @@
         <Editor v-model="code" @code-change="handleCodeChange" />
       </div>
       <div class="center-panel">
-        <Preview :code="code" :props="componentProps" @error="handlePreviewError" />
+        <Preview :code="code" :props="componentProps" :component-styles="componentStyles" @error="handlePreviewError" />
       </div>
       <div class="right-panel">
         <PropertyPanel 
           :props-schema="propsSchema" 
           :props-values="componentProps"
+          :component-styles="componentStyles"
+          :current-code="code"
           @props-change="handlePropsChange"
+          @style-change="handleStyleChange"
         />
       </div>
     </div>
@@ -33,13 +36,17 @@ const toolbarRef = ref(null)
 
 const componentProps = ref({})
 const propsSchema = ref([])
+const componentStyles = ref([])
 
-// 解析Vue组件的props
+// 解析Vue组件的props和样式
 const handleCodeChange = (newCode) => {
   try {
     const parsed = parseVueComponent(newCode)
     console.log('Parsed component props:', parsed.props)
+    console.log('Parsed component styles:', parsed.styles)
     propsSchema.value = parsed.props || []
+    componentStyles.value = parsed.styles || []
+    
     // 初始化props值
     const initialProps = {}
     propsSchema.value.forEach(prop => {
@@ -57,6 +64,12 @@ const handlePropsChange = (newProps) => {
   console.log('Props changed:', newProps)
   componentProps.value = { ...newProps }
   // 不再反向修改代码
+}
+
+// 处理样式变化
+const handleStyleChange = (newStyles) => {
+  console.log('Styles changed:', newStyles)
+  componentStyles.value = [...newStyles]
 }
 
 // 应用模板

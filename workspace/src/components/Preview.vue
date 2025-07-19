@@ -26,6 +26,10 @@ const props = defineProps({
   props: {
     type: Object,
     default: () => ({})
+  },
+  componentStyles: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -34,8 +38,9 @@ const emit = defineEmits(['error'])
 const previewFrame = ref(null)
 
 // 生成完整的HTML内容
-const generatePreviewHTML = (code, props) => {
+const generatePreviewHTML = (code, props, componentStyles) => {
   console.log('Generating preview with props:', props)
+  console.log('Generating preview with styles:', componentStyles)
   
   // 提取模板内容
   const templateMatch = code.match(/<template[^>]*>([\s\S]*?)<\/template>/)
@@ -45,9 +50,11 @@ const generatePreviewHTML = (code, props) => {
   const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/)
   const script = scriptMatch ? scriptMatch[1] : ''
   
-  // 提取样式内容
-  const styleMatch = code.match(/<style[^>]*>([\s\S]*?)<\/style>/)
-  const style = styleMatch ? styleMatch[1] : ''
+  // 构建样式内容
+  let stylesContent = ''
+  if (componentStyles && componentStyles.length > 0) {
+    stylesContent = componentStyles.map(style => style.content).join('\n')
+  }
   
   // 获取匹配的模板默认值
   const templates = getBuiltinTemplates()
@@ -88,11 +95,9 @@ const generatePreviewHTML = (code, props) => {
   <meta charset="utf-8">
   <title>Preview</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"><\/script>
-  <script src="https://unpkg.com/element-plus/dist/index.full.js"><\/script>
-  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
   <style>
     body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-    ${style}
+    ${stylesContent}
   </style>
 </head>
 <body>
@@ -144,7 +149,6 @@ const generatePreviewHTML = (code, props) => {
       }
     })
     
-    app.use(ElementPlus)
     app.mount('#app')
   <\/script>
 </body>
@@ -157,7 +161,7 @@ const renderPreview = () => {
   if (!previewFrame.value || !props.code) return
   
   try {
-    const html = generatePreviewHTML(props.code, props.props)
+    const html = generatePreviewHTML(props.code, props.props, props.componentStyles)
     
     // 使用srcdoc避免跨域问题
     previewFrame.value.srcdoc = html
@@ -173,8 +177,8 @@ const refreshPreview = () => {
   renderPreview()
 }
 
-// 监听代码和props变化
-watch(() => [props.code, props.props], () => {
+// 监听代码、props和样式变化
+watch(() => [props.code, props.props, props.componentStyles], () => {
   nextTick(() => {
     renderPreview()
   })

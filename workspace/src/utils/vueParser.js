@@ -1,13 +1,14 @@
 import { compileScript, parse } from '@vue/compiler-sfc'
 
 /**
- * 解析Vue组件代码，提取props定义
+ * 解析Vue组件代码，提取props定义和样式
  * @param {string} code - Vue组件代码
  * @returns {object} 解析结果
  */
 export function parseVueComponent(code) {
   try {
     const props = []
+    const styles = []
     
     // 使用正则直接提取所有prop定义
     const propRegex = /(\w+)\s*:\s*{[^}]*default\s*:\s*['"`]([^'"`]+)['"`]/g
@@ -40,16 +41,27 @@ export function parseVueComponent(code) {
       }
     }
     
+    // 提取样式内容
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/g
+    let styleMatch
+    while ((styleMatch = styleRegex.exec(code)) !== null) {
+      styles.push({
+        content: styleMatch[1].trim(),
+        scoped: styleMatch[0].includes('scoped')
+      })
+    }
+    
     console.log('解析到的props:', props)
+    console.log('解析到的样式:', styles)
     return {
       props,
       template: '',
       script: '',
-      styles: []
+      styles
     }
   } catch (error) {
     console.error('解析Vue组件失败:', error)
-    return { props: [], template: '', script: '', styles: [] }
+    return { props: [], template: '', script: [], styles: [] }
   }
 }
 
@@ -106,7 +118,7 @@ export function getBuiltinTemplates() {
   <div class="basic-component">
     <h1>{{ title }}</h1>
     <p>{{ description }}</p>
-    <el-button type="primary" @click="handleClick">{{ buttonText }}</el-button>
+    <button class="btn-primary" @click="handleClick">{{ buttonText }}</button>
   </div>
 </template>
 
@@ -138,18 +150,37 @@ const handleClick = () => {
   padding: 20px;
   text-align: center;
 }
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
 </style>`
     ),
     createTemplate(
       '卡片组件',
-      'Element Plus卡片组件示例',
+      '原生HTML卡片组件示例',
       `<template>
-  <el-card :header="title" class="card-component">
-    <p>{{ content }}</p>
-    <div class="card-footer">
-      <el-button type="primary" size="small">{{ buttonText }}</el-button>
+  <div class="card-component">
+    <div class="card-header">
+      <h3>{{ title }}</h3>
     </div>
-  </el-card>
+    <div class="card-body">
+      <p>{{ content }}</p>
+      <div class="card-footer">
+        <button class="btn-primary btn-small">{{ buttonText }}</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -173,28 +204,80 @@ const props = defineProps({
 .card-component {
   max-width: 400px;
   margin: 0 auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
+
+.card-header {
+  background-color: #f5f5f5;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.card-body {
+  padding: 20px;
+}
+
 .card-footer {
   margin-top: 20px;
   text-align: right;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
 }
 </style>`
     ),
     createTemplate(
       '表单组件',
-      '包含输入框和按钮的表单组件',
+      '包含输入框和按钮的原生表单组件',
       `<template>
-  <el-form :model="form" label-width="80px" class="form-component">
-    <el-form-item label="用户名">
-      <el-input v-model="form.username" :placeholder="usernamePlaceholder" />
-    </el-form-item>
-    <el-form-item label="邮箱">
-      <el-input v-model="form.email" :placeholder="emailPlaceholder" />
-    </el-form-item>
-    <el-form-item>
-      <el-button type="primary" @click="handleSubmit">{{ submitText }}</el-button>
-    </el-form-item>
-  </el-form>
+  <form class="form-component" @submit.prevent="handleSubmit">
+    <div class="form-group">
+      <label>用户名</label>
+      <input 
+        type="text" 
+        v-model="form.username" 
+        :placeholder="usernamePlaceholder"
+        class="form-input"
+      />
+    </div>
+    <div class="form-group">
+      <label>邮箱</label>
+      <input 
+        type="email" 
+        v-model="form.email" 
+        :placeholder="emailPlaceholder"
+        class="form-input"
+      />
+    </div>
+    <div class="form-group">
+      <button type="submit" class="btn-primary">{{ submitText }}</button>
+    </div>
+  </form>
 </template>
 
 <script setup>
@@ -232,6 +315,44 @@ const handleSubmit = () => {
   max-width: 500px;
   margin: 0 auto;
   padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
 }
 </style>`
     )
