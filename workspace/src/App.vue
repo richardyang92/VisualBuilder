@@ -28,7 +28,7 @@ import Toolbar from './components/Toolbar.vue'
 import Editor from './components/Editor.vue'
 import Preview from './components/Preview.vue'
 import PropertyPanel from './components/PropertyPanel.vue'
-import { parseVueComponent, generateVueComponent } from './utils/vueParser'
+import { parseVueComponent, generateVueComponent, updateVueComponentStyles } from './utils/vueParser'
 import { defaultCode } from './templates/default.js'
 
 const code = ref(defaultCode)
@@ -70,6 +70,10 @@ const handlePropsChange = (newProps) => {
 const handleStyleChange = (newStyles) => {
   console.log('Styles changed:', newStyles)
   componentStyles.value = [...newStyles]
+  
+  // 更新代码编辑器中的样式
+  const updatedCode = updateVueComponentStyles(code.value, newStyles)
+  code.value = updatedCode
 }
 
 // 应用模板

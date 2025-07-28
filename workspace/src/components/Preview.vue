@@ -37,58 +37,47 @@ const emit = defineEmits(['error'])
 
 const previewFrame = ref(null)
 
-// 生成完整的HTML内容
-const generatePreviewHTML = (code, props, componentStyles) => {
-  console.log('Generating preview with props:', props)
-  console.log('Generating preview with styles:', componentStyles)
-  
-  // 提取模板内容
-  const templateMatch = code.match(/<template[^>]*>([\s\S]*?)<\/template>/)
-  const template = templateMatch ? templateMatch[1] : '<div>组件无模板</div>'
-  
-  // 提取脚本内容
-  const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/)
-  const script = scriptMatch ? scriptMatch[1] : ''
-  
-  // 构建样式内容
-  let stylesContent = ''
-  if (componentStyles && componentStyles.length > 0) {
-    stylesContent = componentStyles.map(style => style.content).join('\n')
-  }
-  
-  // 获取匹配的模板默认值
-  const templates = getBuiltinTemplates()
-  const matchedTemplate = templates.find(t => 
-    t.code.includes('<template>') && 
-    t.code.includes('</template>') &&
-    t.code.includes(code)
-  )
-  
-  // 使用模板默认值或传入的props
-  const propsData = props || {}
-  const defaultProps = matchedTemplate ? 
-    parseVueComponent(matchedTemplate.code).props.reduce((acc, prop) => {
-      acc[prop.name] = prop.default
-      return acc
-    }, {}) : {}
+  // 生成完整的HTML内容
+  const generatePreviewHTML = (code, props, componentStyles) => {
+    console.log('Generating preview with code:', code)
     
-  const finalProps = { ...defaultProps, ...propsData }
-  console.log('Final props data:', finalProps)
-  
-  const propsBinding = Object.keys(finalProps)
-    .map(key => {
-      const value = propsData[key]
-      console.log(`Prop binding: ${key} = ${value}`)
-      return `:${key}="\`${value}\`"`
-    })
-    .join(' ')
-  
-  console.log('Final props binding:', propsBinding)
-  
-  // 将finalProps转换为字符串以便在iframe中使用
-  const finalPropsStr = JSON.stringify(finalProps)
-  
-  return `
+    // 提取样式内容
+    const styleMatch = code.match(/<style[^>]*>([\s\S]*?)<\/style>/)
+    const componentStyle = styleMatch ? styleMatch[1] : ''
+    
+    // 构建样式内容
+    let stylesContent = componentStyle
+    if (componentStyles && componentStyles.length > 0) {
+      const externalStyles = componentStyles.map(style => style.content).join('\n')
+      stylesContent = stylesContent + '\n' + externalStyles
+    }
+    
+    // 使用完整的Vue组件代码
+    const vueCode = code
+    
+    // 提取模板和脚本
+    const templateMatch = vueCode.match(/<template[^>]*>([\s\S]*?)<\/template>/)
+    const template = templateMatch ? templateMatch[1] : '<div>无模板</div>'
+    
+    const scriptMatch = vueCode.match(/<script[^>]*>([\s\S]*?)<\/script>/)
+    const script = scriptMatch ? scriptMatch[1] : ''
+    
+    // 处理脚本内容
+    let processedScript = script
+    
+    // 移除import语句，但保留reactive等API的使用
+    processedScript = processedScript.replace(/import\s+.*?from\s+['"][^'"]*['"]\s*;?/g, '')
+    
+    // 构建props对象
+    const propsJSON = JSON.stringify(props || {})
+    
+    // 转义模板内容
+    const escapedTemplate = template
+      .replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$/g, '\\$')
+    
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -101,54 +90,34 @@ const generatePreviewHTML = (code, props, componentStyles) => {
   </style>
 </head>
 <body>
-  <div id="app">
-    <preview-component ${propsBinding}></preview-component>
-  </div>
+  <div id="app"></div>
 
   <script>
-    const { createApp, defineProps, defineEmits, reactive } = Vue
+    const props = ${propsJSON};
     
-    // 获取从父窗口传递的props
-    const finalProps = ${finalPropsStr}
-    
-    // 创建预览组件
-    const PreviewComponent = {
-      props: Object.fromEntries(
-        Object.entries(finalProps).map(([key, value]) => 
-          [key, { type: String, default: value }]
-        )
-      ),
-      emits: ['click', 'submit'],
-      setup(props, { emit }) {
-        console.log('PreviewComponent props:', props)
-        const handleClick = () => {
-          emit('click', '按钮被点击了')
-        }
-        
-        const handleSubmit = (form) => {
-          emit('submit', form)
-        }
-        
-        const form = reactive({
-          username: '',
-          email: ''
-        })
-        
-        return {
-          handleClick,
-          handleSubmit,
-          form
-        }
+    // 创建组件定义
+    const componentDef = {
+      template: \`${escapedTemplate}\`,
+      data() {
+        return { 
+          ...props,
+          form: {
+            username: '',
+            email: ''
+          }
+        };
       },
-      template: \`${template}\`
+      methods: {
+        handleClick() {
+          console.log('Button clicked');
+        },
+        handleSubmit() {
+          console.log('Form submitted', this.form);
+        }
+      }
     }
     
-    const app = createApp({
-      components: {
-        PreviewComponent
-      }
-    })
-    
+    const app = Vue.createApp(componentDef)
     app.mount('#app')
   <\/script>
 </body>

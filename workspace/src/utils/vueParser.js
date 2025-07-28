@@ -77,6 +77,45 @@ export function generateVueComponent(originalCode, newProps) {
 }
 
 /**
+ * 根据新的样式更新Vue组件代码
+ * @param {string} originalCode - 原始代码
+ * @param {Array} newStyles - 新的样式数组
+ * @returns {string} 更新后的代码
+ */
+export function updateVueComponentStyles(originalCode, newStyles) {
+  // 如果没有样式，直接返回原始代码
+  if (!newStyles || newStyles.length === 0) {
+    return originalCode
+  }
+  
+  // 生成新的样式内容
+  let newStyleContent = ''
+  newStyles.forEach(style => {
+    const scopedAttr = style.scoped ? ' scoped' : ''
+    newStyleContent += `<style${scopedAttr}>\n${style.content}\n</style>\n`
+  })
+  
+  // 检查原始代码中是否有<style>标签
+  const styleRegex = /<style[^>]*>[\s\S]*?<\/style>\s*/g
+  const hasStyleTag = styleRegex.test(originalCode)
+  
+  if (hasStyleTag) {
+    // 如果有<style>标签，替换它
+    return originalCode.replace(styleRegex, newStyleContent)
+  } else {
+    // 如果没有<style>标签，将新样式添加到代码末尾
+    // 但要在</script>标签之后
+    const scriptRegex = /<\/script>\s*/
+    if (scriptRegex.test(originalCode)) {
+      return originalCode.replace(scriptRegex, `</script>\n\n${newStyleContent}`)
+    } else {
+      // 如果连</script>标签都没有，直接添加到末尾
+      return originalCode + `\n\n${newStyleContent}`
+    }
+  }
+}
+
+/**
  * 生成唯一ID
  * @returns {string} 唯一ID
  */

@@ -30,6 +30,14 @@
             {{ template.name }}
             <span v-if="selectedTemplateId === template.id" class="debug">✓</span>
           </button>
+          <div class="dropdown-divider"></div>
+          <button 
+            :class="['dropdown-item', { 'active': selectedTemplateId === 'custom' }]"
+            @click="selectCustomMode"
+          >
+            自定义模式
+            <span v-if="selectedTemplateId === 'custom'" class="debug">✓</span>
+          </button>
         </div>
       </div>
     </div>
@@ -42,10 +50,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getBuiltinTemplates } from '../utils/vueParser'
+import { emptyTemplate } from '../templates/empty.js'
 
 const showFileMenu = ref(false)
 const showTemplateMenu = ref(false)
-import { getBuiltinTemplates } from '../utils/vueParser'
 
 const emit = defineEmits(['template-selected'])
 
@@ -68,9 +77,18 @@ const selectTemplate = (template) => {
   emit('template-selected', template)
 }
 
+const selectCustomMode = () => {
+  selectedTemplateId.value = 'custom'
+  emit('template-selected', { 
+    id: 'custom', 
+    name: '自定义模式', 
+    code: emptyTemplate 
+  })
+}
+
 const handleNew = () => {
-  // 新建文件逻辑
-  console.log('新建文件')
+  // 新建文件 - 切换到自定义模式
+  selectCustomMode()
 }
 
 const handleOpen = () => {
@@ -160,6 +178,12 @@ const handleExportVue = () => {
 .dropdown-item.active {
   background-color: #409eff;
   color: white;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #e4e7ed;
+  margin: 4px 0;
 }
 
 .toolbar-btn {
