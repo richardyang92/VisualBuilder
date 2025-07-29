@@ -1,0 +1,5 @@
+{
+  "name": "基础组件",
+  "description": "包含基本props的Vue3组件",
+  "code": "<template>\n  <div class=\"basic-component\">\n    <h1>{{ title }}</h1>\n    <p>{{ description }}</p>\n    <button class=\"btn-primary\" @click=\"handleClick\">{{ buttonText }}</button>\n  </div>\n</template>\n\n<script setup>\nconst props = defineProps({\n  title: {\n    type: String,\n    default: '标题'\n  },\n  description: {\n    type: String,\n    default: '这是一个描述文本'\n  },\n  buttonText: {\n    type: String,\n    default: '点击按钮'\n  }\n})\n\nconst emit = defineEmits(['click'])\n\nconst handleClick = () => {\n  emit('click', '按钮被点击了')\n}\n</script>\n\n<style scoped>\n.basic-component {\n  padding: 20px;\n  text-align: center;\n}\n\n.btn-primary {\n  background-color: #007bff;\n  color: white;\n  border: none;\n  padding: 10px 20px;\n  border-radius: 4px;\n  cursor: pointer;\n  font-size: 14px;\n}\n\n.btn-primary:hover {\n  background-color: #0056b3;\n}\n</style>"
+}

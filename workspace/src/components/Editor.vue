@@ -17,38 +17,7 @@
 import { ref, onMounted, watch } from 'vue'
 import * as monaco from 'monaco-editor'
 
-// 完全禁用 Monaco Editor 的 web worker 功能
-window.MonacoEnvironment = {
-  getWorker: function() {
-    return null
-  },
-  getWorkerUrl: function() {
-    return null
-  }
-}
-
-// 全局禁用 Monaco Editor 的 worker 相关功能
-if (typeof window !== 'undefined') {
-  window.MonacoEnvironment = window.MonacoEnvironment || {}
-  window.MonacoEnvironment.getWorker = function() {
-    return null
-  }
-  window.MonacoEnvironment.getWorkerUrl = function() {
-    return null
-  }
-}
-
-// 禁用 Monaco Editor 的链接功能以避免 worker 错误
-if (typeof window !== 'undefined') {
-  window.MonacoEnvironment = {
-    getWorker: function() {
-      return null
-    },
-    getWorkerUrl: function() {
-      return null
-    }
-  }
-}
+// 不需要特殊的web worker配置
 
 const props = defineProps({
   modelValue: {
@@ -124,6 +93,7 @@ const toggleTheme = () => {
 // 格式化代码
 const formatCode = () => {
   if (editor) {
+    // 使用 Monaco Editor 的格式化功能
     editor.getAction('editor.action.formatDocument').run()
   }
 }

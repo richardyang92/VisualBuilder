@@ -116,6 +116,24 @@ export function updateVueComponentStyles(originalCode, newStyles) {
 }
 
 /**
+ * 更新Vue组件代码中的props默认值
+ * @param {string} originalCode - 原始代码
+ * @param {string} propName - 属性名称
+ * @param {string} newDefaultValue - 新的默认值
+ * @returns {string} 更新后的代码
+ */
+export function updateVueComponentPropDefault(originalCode, propName, newDefaultValue) {
+  // 创建一个正则表达式来匹配指定prop的定义
+  // 匹配类似: propName: { ... default: 'value' ... }
+  const propRegex = new RegExp(`(${propName}\\s*:\\s*\\{[^}]*default\\s*:\\s*)['"\`][^'"\`]*['"\`]`, 'g');
+  
+  // 替换默认值
+  const updatedCode = originalCode.replace(propRegex, `$1'${newDefaultValue}'`);
+  
+  return updatedCode;
+}
+
+/**
  * 生成唯一ID
  * @returns {string} 唯一ID
  */
@@ -148,252 +166,95 @@ export function createTemplate(name, description, code) {
  * 获取内置模板列表
  * @returns {Array} 模板列表
  */
-export function getBuiltinTemplates() {
+export async function getBuiltinTemplates() {
+  // 动态导入所有模板文件
+  const [basicComponent, cardComponent, formComponent] = await Promise.all([
+    import('../templates/basic-component.json'),
+    import('../templates/card-component.json'),
+    import('../templates/form-component.json')
+  ])
+
   return [
     createTemplate(
-      '基础组件',
-      '包含基本props的Vue3组件',
-      `<template>
-  <div class="basic-component">
-    <h1>{{ title }}</h1>
-    <p>{{ description }}</p>
-    <button class="btn-primary" @click="handleClick">{{ buttonText }}</button>
-  </div>
-</template>
-
-<script setup>
-const props = defineProps({
-  title: {
-    type: String,
-    default: '标题'
-  },
-  description: {
-    type: String,
-    default: '这是一个描述文本'
-  },
-  buttonText: {
-    type: String,
-    default: '点击按钮'
-  }
-})
-
-const emit = defineEmits(['click'])
-
-const handleClick = () => {
-  emit('click', '按钮被点击了')
-}
-</script>
-
-<style scoped>
-.basic-component {
-  padding: 20px;
-  text-align: center;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-</style>`
+      basicComponent.default.name,
+      basicComponent.default.description,
+      basicComponent.default.code
     ),
     createTemplate(
-      '卡片组件',
-      '原生HTML卡片组件示例',
-      `<template>
-  <div class="card-component">
-    <div class="card-header">
-      <h3>{{ title }}</h3>
-    </div>
-    <div class="card-body">
-      <p>{{ content }}</p>
-      <div class="card-footer">
-        <button class="btn-primary btn-small">{{ buttonText }}</button>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup>
-const props = defineProps({
-  title: {
-    type: String,
-    default: '卡片标题'
-  },
-  content: {
-    type: String,
-    default: '这是卡片的内容文本'
-  },
-  buttonText: {
-    type: String,
-    default: '操作按钮'
-  }
-})
-</script>
-
-<style scoped>
-.card-component {
-  max-width: 400px;
-  margin: 0 auto;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.card-header {
-  background-color: #f5f5f5;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #333;
-}
-
-.card-body {
-  padding: 20px;
-}
-
-.card-footer {
-  margin-top: 20px;
-  text-align: right;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-small {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-</style>`
+      cardComponent.default.name,
+      cardComponent.default.description,
+      cardComponent.default.code
     ),
     createTemplate(
-      '表单组件',
-      '包含输入框和按钮的原生表单组件',
-      `<template>
-  <form class="form-component" @submit.prevent="handleSubmit">
-    <div class="form-group">
-      <label>用户名</label>
-      <input 
-        type="text" 
-        v-model="form.username" 
-        :placeholder="usernamePlaceholder"
-        class="form-input"
-      />
-    </div>
-    <div class="form-group">
-      <label>邮箱</label>
-      <input 
-        type="email" 
-        v-model="form.email" 
-        :placeholder="emailPlaceholder"
-        class="form-input"
-      />
-    </div>
-    <div class="form-group">
-      <button type="submit" class="btn-primary">{{ submitText }}</button>
-    </div>
-  </form>
-</template>
-
-<script setup>
-import { reactive } from 'vue'
-
-const props = defineProps({
-  usernamePlaceholder: {
-    type: String,
-    default: '请输入用户名'
-  },
-  emailPlaceholder: {
-    type: String,
-    default: '请输入邮箱地址'
-  },
-  submitText: {
-    type: String,
-    default: '提交'
-  }
-})
-
-const emit = defineEmits(['submit'])
-
-const form = reactive({
-  username: '',
-  email: ''
-})
-
-const handleSubmit = () => {
-  emit('submit', form)
-}
-</script>
-
-<style scoped>
-.form-component {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #333;
-}
-
-.form-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-</style>`
+      formComponent.default.name,
+      formComponent.default.description,
+      formComponent.default.code
     )
   ]
+}
+
+/**
+ * 加载指定的模板文件
+ * @param {string} fileName - 模板文件名
+ * @returns {object} 模板对象
+ */
+export async function loadTemplate(fileName) {
+  try {
+    // 确保文件名以.json结尾
+    const fullFileName = fileName.endsWith('.json') ? fileName : `${fileName}.json`;
+    
+    // 使用fetch API加载模板文件
+    const response = await fetch(`/src/templates/${fullFileName}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load template ${fullFileName}: ${response.status} ${response.statusText}`);
+    }
+    
+    const templateData = await response.json();
+    
+    return createTemplate(
+      templateData.name,
+      templateData.description,
+      templateData.code
+    )
+  } catch (error) {
+    console.error(`Failed to load template ${fileName}:`, error)
+    throw error
+  }
+}
+
+/**
+ * 获取默认代码模板
+ * @returns {string} 默认代码
+ */
+export async function getDefaultCode() {
+  try {
+    // Load all template files from the templates directory
+    const templateFiles = [
+      'basic-component.json',
+      'card-component.json',
+      'form-component.json'
+    ];
+    
+    // Load and parse all templates
+    const templates = await Promise.all(
+      templateFiles.map(async (fileName) => {
+        try {
+          const template = await loadTemplate(fileName);
+          return template;
+        } catch (error) {
+          console.error(`Failed to load template ${fileName}:`, error);
+          return null;
+        }
+      })
+    );
+    
+    // Filter out any null templates and find the "基础组件" template
+    const validTemplates = templates.filter(template => template !== null);
+    const basicComponent = validTemplates.find(t => t.name === '基础组件');
+    
+    return basicComponent ? basicComponent.code : '';
+  } catch (error) {
+    console.error('Failed to load default template:', error);
+    return '';
+  }
 }

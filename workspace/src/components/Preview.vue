@@ -16,7 +16,7 @@
 
 <script setup>
 import { ref, watch, nextTick } from 'vue'
-import { getBuiltinTemplates, parseVueComponent } from '../utils/vueParser'
+import { parseVueComponent } from '../utils/vueParser'
 
 const props = defineProps({
   code: {
@@ -156,7 +156,7 @@ watch(() => [props.code, props.props, props.componentStyles], () => {
 
 <style scoped>
 .preview-container {
-  height: 100%;
+  height: calc(100vh - 60px); /* 减去顶部工具栏的高度 */
   display: flex;
   flex-direction: column;
 }

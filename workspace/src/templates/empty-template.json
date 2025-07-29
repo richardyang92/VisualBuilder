@@ -1,0 +1,5 @@
+{
+  "name": "空模板",
+  "description": "完全空的Vue组合式API模板",
+  "code": "<template>\n  <div class=\"custom-component\">\n    <!-- 在这里编写你的模板 -->\n  </div>\n</template>\n\n<script setup>\nimport { ref } from 'vue'\n\n// 在这里编写你的逻辑\n</script>\n\n<style scoped>\n/* 在这里编写你的样式 */\n</style>"
+}

@@ -13,44 +13,48 @@
         </el-icon>
       </el-button>
     </div>
-    <div class="panel-content" v-show="propsPanelExpanded">
-      <el-form v-if="propsSchema.length > 0" label-position="top">
-        <el-form-item 
-          v-for="prop in propsSchema" 
-          :key="prop.name"
-          :label="prop.name"
-        >
-          <component 
-            :is="getInputComponent(prop.type)"
-            v-model="propsValues[prop.name]"
-            :placeholder="`请输入${prop.name}`"
-            @change="handlePropChange(prop.name, $event)"
-          />
-          <div class="prop-description" v-if="prop.default">
-            默认值: {{ prop.default }}
-          </div>
-        </el-form-item>
-      </el-form>
-      <div v-else class="no-props">
-        <el-empty description="暂无属性配置" />
+    <div class="props-panel" :class="{ 'full-height': !stylesPanelExpanded }" v-if="propsPanelExpanded">
+      <div class="panel-content">
+        <el-form v-if="propsSchema.length > 0" label-position="top">
+          <el-form-item 
+            v-for="prop in propsSchema" 
+            :key="prop.name"
+            :label="prop.name"
+          >
+            <div class="prop-description" v-if="prop.default !== undefined">
+              默认值: 
+              <component 
+                :is="getInputComponent(prop.type)"
+                :model-value="prop.default"
+                @update:model-value="handleDefaultChange(prop, $event)"
+                :placeholder="`默认值: ${prop.default}`"
+                size="small"
+                style="width: auto; display: inline-block; margin-left: 8px;"
+              />
+            </div>
+          </el-form-item>
+        </el-form>
+        <div v-else class="no-props">
+          <el-empty description="暂无属性配置" />
+        </div>
       </div>
     </div>
     
-    <div class="style-panel">
-      <div class="panel-header">
-        <h3>样式配置</h3>
-        <el-button 
-          type="text" 
-          @click="toggleStylesPanel"
-          class="collapse-btn"
-        >
-          <el-icon>
-            <ArrowUp v-if="stylesPanelExpanded" />
-            <ArrowDown v-else />
-          </el-icon>
-        </el-button>
-      </div>
-      <div class="panel-content" v-show="stylesPanelExpanded">
+    <div class="panel-header">
+      <h3>样式配置</h3>
+      <el-button 
+        type="text" 
+        @click="toggleStylesPanel"
+        class="collapse-btn"
+      >
+        <el-icon>
+          <ArrowUp v-if="stylesPanelExpanded" />
+          <ArrowDown v-else />
+        </el-icon>
+      </el-button>
+    </div>
+    <div class="style-panel" :class="{ 'full-height': !propsPanelExpanded }" v-if="stylesPanelExpanded">
+      <div class="panel-content">
         <div v-if="parsedStyles.length > 0">
           <div v-for="(styleRule, index) in parsedStyles" :key="index" class="style-rule-section">
             <div class="style-rule-header">
@@ -67,9 +71,18 @@
                   v-for="(property, propIndex) in styleRule.properties" 
                   :key="propIndex"
                   :label="formatPropertyName(property.name)"
+
                 >
                   <div class="property-input-row">
+                    <el-color-picker
+                      v-if="isColorProperty(property.name)"
+                      v-model="property.value"
+                      @change="handleStylePropertyChange(styleRule.selector, property.name, $event)"
+                      @active-change="handleStylePropertyChange(styleRule.selector, property.name, $event)"
+                      show-alpha
+                    />
                     <el-input
+                      v-else
                       v-model="property.value"
                       @input="handleStylePropertyChange(styleRule.selector, property.name, $event)"
                       :placeholder="getDefaultPropertyValue(property.name)"
@@ -99,7 +112,7 @@
                     :value="prop.name"
                   />
                 </el-select>
-                <el-button size="small" @click="addNewProperty(index)">添加属性</el-button>
+                <el-button style="margin-top: 12px;" size="small" @click="addNewProperty(index)">添加属性</el-button>
               </div>
             </div>
           </div>
@@ -107,12 +120,14 @@
         <div v-else class="no-styles">
           <el-empty description="暂无样式配置" />
         </div>
-        
-        <div class="style-actions">
-          <el-button size="small" @click="resetStyles">重置样式</el-button>
-          <el-button size="small" @click="addNewStyleRule" type="primary">添加样式规则</el-button>
-        </div>
       </div>
+      <div class="style-actions">
+        <el-button size="small" @click="resetStyles">重置样式</el-button>
+        <el-button size="small" @click="addNewStyleRule" type="primary">添加样式规则</el-button>
+      </div>
+    </div>
+    <div v-if="!propsPanelExpanded && !stylesPanelExpanded" class="empty-state">
+      <el-empty description="暂无配置项" />
     </div>
   </div>
 </template>
@@ -120,6 +135,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
+import { ElColorPicker } from 'element-plus'
 
 const props = defineProps({
   propsSchema: {
@@ -140,7 +156,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['props-change', 'style-change'])
+const emit = defineEmits(['props-change', 'style-change', 'default-change'])
 
 // 本地样式数据
 const localStyles = ref([])
@@ -272,6 +288,13 @@ const getInputType = (type) => {
 const handlePropChange = (propName, value) => {
   const newProps = { ...props.propsValues, [propName]: value }
   emit('props-change', newProps)
+}
+
+// 处理默认值变化
+const handleDefaultChange = (prop, value) => {
+  // 发出事件通知父组件默认值已更改
+  console.log(`默认值变化: ${prop.name} = ${value}`)
+  emit('default-change', { propName: prop.name, defaultValue: value })
 }
 
 // 解析CSS样式为属性配置
@@ -534,21 +557,21 @@ const resetStyles = () => {
     })
   }
   
+  // 更新本地样式
+  localStyles.value = [...styles]
+  
+  // 解析CSS为属性配置
   if (styles.length > 0) {
-    // 更新本地样式
-    localStyles.value = [...styles]
-    
-    // 解析CSS为属性配置
     const parsed = parseCSSStyles(styles[0].content)
     parsedStyles.value = parsed
-    
-    emit('style-change', localStyles.value)
   } else {
-    // 如果没有找到样式，清空样式
-    localStyles.value = []
     parsedStyles.value = []
-    emit('style-change', localStyles.value)
   }
+  
+  // 重置新属性选择
+  newPropertySelection.value = {}
+  
+  emit('style-change', localStyles.value)
 }
 
 // 监听组件样式变化
@@ -564,6 +587,24 @@ watch(() => props.componentStyles, (newStyles) => {
   }
 }, { immediate: true, deep: true })
 
+// 判断是否为颜色属性
+const isColorProperty = (propertyName) => {
+  const colorProperties = [
+    'background-color',
+    'color',
+    'border-color',
+    'border-top-color',
+    'border-right-color',
+    'border-bottom-color',
+    'border-left-color',
+    'outline-color',
+    'text-decoration-color',
+    'text-shadow',
+    'box-shadow'
+  ]
+  return colorProperties.includes(propertyName)
+}
+
 // 监听props值变化
 watch(() => props.propsValues, (newValues) => {
   // 可以在这里添加额外的处理逻辑
@@ -572,7 +613,7 @@ watch(() => props.propsValues, (newValues) => {
 
 <style scoped>
 .property-panel {
-  height: 100%;
+  height: calc(100vh - 60px); /* 减去顶部工具栏的高度 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -585,6 +626,7 @@ watch(() => props.propsValues, (newValues) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* 防止头部在空间不足时收缩 */
 }
 
 .panel-header h3 {
@@ -597,6 +639,19 @@ watch(() => props.propsValues, (newValues) => {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
+  min-height: 0; /* 允许面板收缩到更小 */
+}
+
+.props-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 允许面板收缩到更小 */
+  margin-bottom: 16px; /* 添加底部间距 */
+}
+
+.props-panel.full-height {
+  flex: 1; /* 当样式面板收起时，属性面板占满剩余空间 */
 }
 
 .style-panel {
@@ -605,6 +660,10 @@ watch(() => props.propsValues, (newValues) => {
   display: flex;
   flex-direction: column;
   min-height: 0; /* 允许面板收缩到更小 */
+}
+
+.style-panel.full-height {
+  flex: 1; /* 当属性面板收起时，样式面板占满剩余空间 */
 }
 
 .style-panel .panel-content {
@@ -636,6 +695,7 @@ watch(() => props.propsValues, (newValues) => {
   display: flex;
   gap: 8px;
   margin-top: 16px;
+  padding-left: 12px;
 }
 
 .prop-description {
@@ -695,5 +755,12 @@ watch(() => props.propsValues, (newValues) => {
   word-break: break-all;
   line-height: 1.3;
   padding: 5px 0;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

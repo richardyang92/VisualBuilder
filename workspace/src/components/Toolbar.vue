@@ -49,27 +49,45 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getBuiltinTemplates } from '../utils/vueParser'
-import { emptyTemplate } from '../templates/empty.js'
+import { ref, onMounted, computed } from 'vue'
+import { getBuiltinTemplates, loadTemplate } from '../utils/vueParser'
 
 const showFileMenu = ref(false)
 const showTemplateMenu = ref(false)
 
-const emit = defineEmits(['template-selected'])
+const emit = defineEmits(['template-selected', 'save-template', 'export-vue', 'load-template'])
 
-const templates = ref([])
+const builtinTemplates = ref([])
 const selectedTemplateId = ref(null)
+const emptyTemplate = ref('')
 
-onMounted(() => {
-  templates.value = getBuiltinTemplates()
-  console.log('Templates loaded:', templates.value.map(t => ({id: t.id, name: t.name})))
-  
-  // 默认选中第一个模板（基础组件）
-  if (templates.value.length > 0) {
-    selectedTemplateId.value = templates.value[0].id
-    emit('template-selected', templates.value[0])
+onMounted(async () => {
+  // 获取内置模板
+  try {
+    builtinTemplates.value = await getBuiltinTemplates()
+    
+    console.log('Builtin templates loaded:', builtinTemplates.value.map(t => ({id: t.id, name: t.name})))
+    
+    // 默认选中第一个模板（基础组件）
+    if (builtinTemplates.value.length > 0) {
+      selectedTemplateId.value = builtinTemplates.value[0].id
+      emit('template-selected', builtinTemplates.value[0])
+    }
+    
+    // 加载空模板
+    try {
+      const emptyTemplateData = await loadTemplate('empty-template.json')
+      emptyTemplate.value = emptyTemplateData.code
+    } catch (error) {
+      console.error('Failed to load empty template:', error)
+    }
+  } catch (error) {
+    console.error('Failed to load builtin templates:', error)
   }
+})
+
+const templates = computed(() => {
+  return [...builtinTemplates.value]
 })
 
 const selectTemplate = (template) => {
@@ -82,7 +100,7 @@ const selectCustomMode = () => {
   emit('template-selected', { 
     id: 'custom', 
     name: '自定义模式', 
-    code: emptyTemplate 
+    code: emptyTemplate.value 
   })
 }
 
@@ -92,18 +110,70 @@ const handleNew = () => {
 }
 
 const handleOpen = () => {
-  // 打开文件逻辑
+  // 打开文件逻辑 - 加载本地JSON模板文件
   console.log('打开文件')
+  
+  // 创建文件输入元素
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = '.json'
+  
+  // 设置文件选择后的回调
+  fileInput.onchange = (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+    
+    // 读取文件内容
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        // 解析JSON内容
+        const templateData = JSON.parse(e.target.result)
+        
+        // 验证模板数据结构
+        if (!templateData.code) {
+          throw new Error('Invalid template format: missing code property')
+        }
+        
+        // 生成模板对象
+        const template = {
+          id: 'local-' + Date.now(), // 生成唯一ID
+          name: templateData.name || '本地模板',
+          description: templateData.description || '从本地文件加载的模板',
+          code: templateData.code
+        }
+        
+        // 发送事件到父组件
+        emit('load-template', template)
+      } catch (error) {
+        console.error('Failed to load template file:', error)
+        alert('加载模板文件失败: ' + error.message)
+      }
+    }
+    
+    reader.onerror = () => {
+      console.error('Failed to read file')
+      alert('读取文件失败')
+    }
+    
+    // 读取文件为文本
+    reader.readAsText(file)
+  }
+  
+  // 触发文件选择对话框
+  fileInput.click()
 }
 
 const handleSave = () => {
-  // 保存文件逻辑
-  console.log('保存文件')
+  // 保存为自定义模板 - 调用父组件的保存方法
+  console.log('保存为自定义模板')
+  emit('save-template')
 }
 
 const handleExportVue = () => {
   // 导出Vue文件逻辑
   console.log('导出Vue文件')
+  emit('export-vue')
 }
 </script>
 
