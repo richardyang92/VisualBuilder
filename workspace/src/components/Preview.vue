@@ -156,28 +156,42 @@ watch(() => [props.code, props.props, props.componentStyles], () => {
 
 <style scoped>
 .preview-container {
-  height: calc(100vh - 60px); /* 减去顶部工具栏的高度 */
+  height: 100%;
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-primary);
 }
 
 .preview-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #dcdfe6;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  flex-shrink: 0;
 }
 
 .preview-header h3 {
   margin: 0;
-  font-size: 16px;
-  color: #303133;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preview-header h3::before {
+  content: '👁️';
+  font-size: 1rem;
 }
 
 .preview-content {
   flex: 1;
   overflow: hidden;
+  position: relative;
+  background-color: #f8fafc;
 }
 
 .preview-iframe {
@@ -185,5 +199,87 @@ watch(() => [props.code, props.props, props.componentStyles], () => {
   height: 100%;
   border: none;
   background: white;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 预览加载状态 */
+.preview-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.preview-loading::before {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 预览错误状态 */
+.preview-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--error-color);
+  background-color: var(--bg-secondary);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--error-color);
+  box-shadow: var(--shadow-md);
+  max-width: 80%;
+}
+
+.preview-error h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.preview-error p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .preview-header {
+    padding: 0.75rem;
+  }
+  
+  .preview-header h3 {
+    font-size: 0.75rem;
+  }
+  
+  .preview-error {
+    padding: 1rem;
+    max-width: 90%;
+  }
+  
+  .preview-error h4 {
+    font-size: 0.875rem;
+  }
+  
+  .preview-error p {
+    font-size: 0.75rem;
+  }
 }
 </style>

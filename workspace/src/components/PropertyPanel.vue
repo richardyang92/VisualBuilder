@@ -613,95 +613,114 @@ watch(() => props.propsValues, (newValues) => {
 
 <style scoped>
 .property-panel {
-  height: calc(100vh - 60px); /* 减去顶部工具栏的高度 */
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: var(--bg-primary);
 }
 
 .panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #dcdfe6;
-  background-color: #f5f7fa;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* 防止头部在空间不足时收缩 */
+  flex-shrink: 0;
 }
 
 .panel-header h3 {
   margin: 0;
-  font-size: 16px;
-  color: #303133;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-header h3::before {
+  content: '⚙️';
+  font-size: 1rem;
 }
 
 .panel-content {
   flex: 1;
-  padding: 16px;
+  padding: 1rem;
   overflow-y: auto;
-  min-height: 0; /* 允许面板收缩到更小 */
+  min-height: 0;
 }
 
 .props-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 允许面板收缩到更小 */
-  margin-bottom: 16px; /* 添加底部间距 */
+  min-height: 0;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .props-panel.full-height {
-  flex: 1; /* 当样式面板收起时，属性面板占满剩余空间 */
+  flex: 1;
 }
 
 .style-panel {
-  border-top: 1px solid #dcdfe6;
+  border-top: 1px solid var(--border-color);
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 允许面板收缩到更小 */
+  min-height: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .style-panel.full-height {
-  flex: 1; /* 当属性面板收起时，样式面板占满剩余空间 */
+  flex: 1;
 }
 
 .style-panel .panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 1rem;
 }
 
 .style-section {
-  margin-bottom: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  background-color: var(--bg-secondary);
 }
 
 .style-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0.75rem;
 }
 
 .style-title {
-  font-weight: bold;
-  color: #303133;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
 }
 
 .style-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  padding-left: 12px;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0 0.5rem;
 }
 
 .prop-description {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  line-height: 1.4;
 }
 
 .no-props, .no-styles {
@@ -709,37 +728,47 @@ watch(() => props.propsValues, (newValues) => {
   align-items: center;
   justify-content: center;
   height: 200px;
+  color: var(--text-tertiary);
 }
 
 .style-rule-section {
-  margin-bottom: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+  transition: all var(--transition-fast);
+}
+
+.style-rule-section:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary-color);
 }
 
 .style-rule-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e4e7ed;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .style-rule-title {
-  font-weight: bold;
-  color: #303133;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
 }
 
 .style-properties {
-  padding: 8px 0;
+  padding: 0.5rem 0;
 }
 
 .property-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .property-input-row .el-input {
@@ -748,13 +777,160 @@ watch(() => props.propsValues, (newValues) => {
 
 .delete-property-btn {
   flex-shrink: 0;
+  background-color: var(--error-color);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  transition: all var(--transition-fast);
+}
+
+.delete-property-btn:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.add-property-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.add-property-section .el-select {
+  width: 100%;
+  margin-bottom: 0.5rem;
 }
 
 :deep(.el-form-item__label) {
   white-space: normal;
   word-break: break-all;
   line-height: 1.3;
-  padding: 5px 0;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+  padding: 1px 7px;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: var(--primary-color);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+:deep(.el-button) {
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+:deep(.el-button--primary) {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+:deep(.el-button--primary:hover) {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+:deep(.el-button--danger) {
+  background-color: var(--error-color);
+  border-color: var(--error-color);
+}
+
+:deep(.el-button--danger:hover) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+:deep(.el-button--small) {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+:deep(.el-button--text) {
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+}
+
+:deep(.el-button--text:hover) {
+  color: var(--primary-color);
+  background-color: var(--bg-secondary);
+}
+
+:deep(.el-icon) {
+  font-size: 1rem;
+}
+
+/* Element Plus 下拉菜单样式修复 */
+:deep(.el-select-dropdown) {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+:deep(.el-select-dropdown__item) {
+  color: var(--text-primary) !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  transition: all var(--transition-fast) !important;
+}
+
+:deep(.el-select-dropdown__item:hover) {
+  background-color: var(--bg-secondary) !important;
+  color: var(--primary-color) !important;
+}
+
+:deep(.el-select-dropdown__item.selected) {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+:deep(.el-color-picker) {
+  --el-color-picker-border-radius: var(--radius-md);
+}
+
+:deep(.el-color-picker__panel) {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+:deep(.el-color-picker__trigger) {
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+:deep(.el-color-picker__trigger:hover) {
+  border-color: var(--primary-color) !important;
+}
+
+:deep(.el-empty) {
+  padding: 2rem !important;
+}
+
+:deep(.el-empty__description) {
+  color: var(--text-tertiary) !important;
+  font-size: 0.875rem !important;
 }
 
 .empty-state {
@@ -762,5 +938,64 @@ watch(() => props.propsValues, (newValues) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-tertiary);
+}
+
+/* 折叠按钮样式 */
+.collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.collapse-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--primary-color);
+}
+
+.collapse-btn .el-icon {
+  font-size: 0.875rem;
+  transition: transform var(--transition-fast);
+}
+
+.collapse-btn:hover .el-icon {
+  transform: scale(1.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .panel-header {
+    padding: 0.75rem;
+  }
+  
+  .panel-header h3 {
+    font-size: 0.75rem;
+  }
+  
+  .panel-content {
+    padding: 0.75rem;
+  }
+  
+  .style-rule-section,
+  .style-section {
+    padding: 0.75rem;
+  }
+  
+  .property-input-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .property-input-row .el-input {
+    width: 100%;
+  }
+  
+  .delete-property-btn {
+    align-self: flex-end;
+  }
 }
 </style>

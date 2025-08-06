@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
-    <Toolbar ref="toolbarRef" @template-selected="applyTemplate" @save-template="handleSaveTemplate" @export-vue="handleExportVue" @load-template="handleLoadTemplate" />
+    <Toolbar ref="toolbarRef" @template-selected="applyTemplate" @save-template="handleSaveTemplate" @export-vue="handleExportVue" @load-template="handleLoadTemplate" @toggle-theme="handleThemeChange" :is-dark-theme="isDarkTheme" />
     <div class="main-content">
       <div class="left-panel">
-        <Editor v-model="code" @code-change="handleCodeChange" />
+        <Editor v-model="code" @code-change="handleCodeChange" :is-dark-theme="isDarkTheme" />
       </div>
       <div class="center-panel">
         <Preview :code="code" :props="componentProps" :component-styles="componentStyles" @error="handlePreviewError" />
@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import Toolbar from './components/Toolbar.vue'
 import Editor from './components/Editor.vue'
 import Preview from './components/Preview.vue'
@@ -33,6 +33,7 @@ import { parseVueComponent, generateVueComponent, updateVueComponentStyles, upda
 
 const code = ref('')
 const toolbarRef = ref(null)
+const isDarkTheme = ref(false)
 
 const componentProps = ref({})
 const propsSchema = ref([])
@@ -167,6 +168,61 @@ onMounted(async () => {
   const defaultCode = await getDefaultCode()
   code.value = defaultCode
   handleCodeChange(defaultCode)
+  
+  // 检查系统主题偏好
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  isDarkTheme.value = prefersDark
+  updateTheme()
+})
+
+// 监听系统主题变化
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  isDarkTheme.value = e.matches
+  updateTheme()
+})
+
+// 更新主题
+const updateTheme = () => {
+  const root = document.documentElement
+  
+  if (isDarkTheme.value) {
+    // 暗色主题
+    root.style.setProperty('--bg-primary', '#1e293b')
+    root.style.setProperty('--bg-secondary', '#0f172a')
+    root.style.setProperty('--bg-tertiary', '#1e293b')
+    root.style.setProperty('--text-primary', '#f1f5f9')
+    root.style.setProperty('--text-secondary', '#cbd5e1')
+    root.style.setProperty('--text-tertiary', '#94a3b8')
+    root.style.setProperty('--border-color', '#334155')
+    root.style.setProperty('--border-light', '#334155')
+  } else {
+    // 亮色主题
+    root.style.setProperty('--bg-primary', '#ffffff')
+    root.style.setProperty('--bg-secondary', '#f8fafc')
+    root.style.setProperty('--bg-tertiary', '#f1f5f9')
+    root.style.setProperty('--text-primary', '#1e293b')
+    root.style.setProperty('--text-secondary', '#64748b')
+    root.style.setProperty('--text-tertiary', '#94a3b8')
+    root.style.setProperty('--border-color', '#e2e8f0')
+    root.style.setProperty('--border-light', '#f1f5f9')
+  }
+}
+
+// 切换主题
+const toggleTheme = () => {
+  isDarkTheme.value = !isDarkTheme.value
+  updateTheme()
+}
+
+// 处理来自工具栏的主题切换事件
+const handleThemeChange = (isDark) => {
+  isDarkTheme.value = isDark
+  updateTheme()
+}
+
+// 暴露切换主题方法给子组件
+defineExpose({
+  toggleTheme
 })
 </script>
 
@@ -176,29 +232,159 @@ onMounted(async () => {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-secondary);
 }
 
 .main-content {
   display: flex;
   flex: 1;
   overflow: hidden;
+  gap: 1px;
+  background-color: var(--border-color);
 }
 
 .left-panel {
   width: 40%;
   height: 100%;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
 .center-panel {
   width: 35%;
   height: 100%;
-  border-left: 1px solid #dcdfe6;
-  border-right: 1px solid #dcdfe6;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
 .right-panel {
   width: 25%;
   height: 100%;
-  overflow: auto;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+  border-left: 1px solid var(--border-color);
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 面板通用样式 */
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-header h3::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background-color: var(--primary-color);
+  border-radius: var(--radius-sm);
+}
+
+.panel-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-primary);
+}
+
+/* 滚动条美化 */
+.left-panel::-webkit-scrollbar,
+.center-panel::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.left-panel::-webkit-scrollbar-track,
+.center-panel::-webkit-scrollbar-track,
+.right-panel::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+.left-panel::-webkit-scrollbar-thumb,
+.center-panel::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 3px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover,
+.center-panel::-webkit-scrollbar-thumb:hover,
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* 面板之间的分隔线增强 */
+.main-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40%;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--border-color), transparent);
+  z-index: 10;
+}
+
+.main-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 75%;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--border-color), transparent);
+  z-index: 10;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .left-panel {
+    width: 100%;
+    height: 33.33%;
+  }
+  
+  .center-panel {
+    width: 100%;
+    height: 33.33%;
+  }
+  
+  .right-panel {
+    width: 100%;
+    height: 33.33%;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .main-content::before,
+  .main-content::after {
+    display: none;
+  }
 }
 </style>

@@ -1,12 +1,17 @@
 <template>
   <div class="toolbar">
     <div class="toolbar-section">
-      <div class="dropdown" @mouseenter="showFileMenu = true" @mouseleave="showFileMenu = false">
+      <div class="dropdown" 
+           @mouseenter="showFileMenu = true" 
+           @mouseleave="handleDropdownLeave('file')">
         <button class="dropdown-toggle">
           文件
           <span class="dropdown-arrow">▼</span>
         </button>
-        <div class="dropdown-menu" v-show="showFileMenu">
+        <div class="dropdown-menu" 
+             v-show="showFileMenu"
+             @mouseenter="showFileMenu = true"
+             @mouseleave="handleDropdownLeave('file')">
           <button class="dropdown-item" @click="handleNew">新建</button>
           <button class="dropdown-item" @click="handleOpen">打开</button>
           <button class="dropdown-item" @click="handleSave">保存</button>
@@ -15,12 +20,17 @@
     </div>
     
     <div class="toolbar-section">
-      <div class="dropdown" @mouseenter="showTemplateMenu = true" @mouseleave="showTemplateMenu = false">
+      <div class="dropdown" 
+           @mouseenter="showTemplateMenu = true" 
+           @mouseleave="handleDropdownLeave('template')">
         <button class="dropdown-toggle">
           模板
           <span class="dropdown-arrow">▼</span>
         </button>
-        <div class="dropdown-menu" v-show="showTemplateMenu">
+        <div class="dropdown-menu" 
+             v-show="showTemplateMenu"
+             @mouseenter="showTemplateMenu = true"
+             @mouseleave="handleDropdownLeave('template')">
           <button 
             v-for="template in templates" 
             :key="template.id"
@@ -45,17 +55,37 @@
     <div class="toolbar-section">
       <button class="toolbar-btn" @click="handleExportVue">导出Vue文件</button>
     </div>
+    
+    <div class="toolbar-section">
+      <button class="toolbar-btn theme-toggle" @click="toggleTheme">
+        {{ isDarkTheme ? '☀️ 日间模式' : '🌙 夜间模式' }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { getBuiltinTemplates, loadTemplate } from '../utils/vueParser'
 
 const showFileMenu = ref(false)
 const showTemplateMenu = ref(false)
+const isDarkTheme = ref(false)
 
-const emit = defineEmits(['template-selected', 'save-template', 'export-vue', 'load-template'])
+const emit = defineEmits(['template-selected', 'save-template', 'export-vue', 'load-template', 'toggle-theme'])
+
+// 接收来自父组件的主题状态
+const props = defineProps({
+  isDarkTheme: {
+    type: Boolean,
+    default: false
+  }
+})
+
+// 监听主题状态变化，更新本地状态
+watch(() => props.isDarkTheme, (newTheme) => {
+  isDarkTheme.value = newTheme
+})
 
 const builtinTemplates = ref([])
 const selectedTemplateId = ref(null)
@@ -175,16 +205,24 @@ const handleExportVue = () => {
   console.log('导出Vue文件')
   emit('export-vue')
 }
+
+// 切换主题
+const toggleTheme = () => {
+  isDarkTheme.value = !isDarkTheme.value
+  emit('toggle-theme', isDarkTheme.value)
+}
 </script>
 
 <style scoped>
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 12px 16px;
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
 .toolbar-section {
@@ -197,84 +235,182 @@ const handleExportVue = () => {
 }
 
 .dropdown-toggle {
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: #303133;
-  background-color: transparent;
-  border: none;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.dropdown-toggle:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .dropdown-arrow {
-  font-size: 10px;
-  margin-left: 4px;
+  font-size: 0.625rem;
+  margin-left: 0.25rem;
+  transition: transform var(--transition-fast);
+}
+
+.dropdown:hover .dropdown-arrow {
+  transform: rotate(180deg);
 }
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 0.5rem);
   left: 0;
-  min-width: 160px;
-  background-color: white;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
-  padding: 4px 0;
+  padding: 0.5rem 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.5rem);
+  transition: all var(--transition-normal);
+}
+
+.dropdown:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   text-align: left;
-  font-size: 13px;
-  color: #606266;
-  background-color: transparent;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background-color: #ffffff;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 150ms ease;
+  gap: 0.5rem;
+  border-radius: 0 !important;
+  margin: 0 !important;
 }
 
 .dropdown-item:hover {
-  background-color: #f5f7fa;
-  color: #409eff;
+  background-color: #f8fafc;
+  color: #3b82f6;
 }
 
 .dropdown-item.active {
-  background-color: #409eff;
+  background-color: #3b82f6;
   color: white;
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: #e4e7ed;
-  margin: 4px 0;
+  background-color: var(--border-color);
+  margin: 0.5rem 0;
 }
 
 .toolbar-btn {
-  padding: 8px 16px;
-  font-size: 14px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #606266;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .toolbar-btn:hover {
-  color: #409eff;
-  border-color: #c6e2ff;
-  background-color: #ecf5ff;
+  background-color: var(--bg-secondary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-toggle {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.theme-toggle:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .debug {
-  margin-left: 4px;
-  font-size: 10px;
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 0.5rem 1rem;
+    gap: 0.5rem;
+  }
+  
+  .dropdown-toggle,
+  .toolbar-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .dropdown-menu {
+    min-width: 140px;
+  }
+}
+
+/* 确保Element Plus的下拉菜单样式正确 */
+:deep(.el-dropdown-menu) {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 0.5rem 0 !important;
+}
+
+:deep(.el-dropdown-menu__item) {
+  color: var(--text-primary) !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  transition: all var(--transition-fast) !important;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background-color: var(--bg-secondary) !important;
+  color: var(--primary-color) !important;
+}
+
+:deep(.el-dropdown-menu__item.is-active) {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+:deep(.el-dropdown-menu__item.is-divided) {
+  border-top: 1px solid var(--border-color) !important;
+  margin-top: 0.5rem !important;
+  padding-top: 0.5rem !important;
 }
 </style>
